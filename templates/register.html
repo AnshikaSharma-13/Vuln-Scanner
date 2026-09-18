@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Register – VulnScanner{% endblock %}
+{% block auth_content %}
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <i class="bi bi-shield-fill-exclamation text-danger me-2"></i>
+      Vuln<span class="text-danger">Scanner</span>
+    </div>
+    <p class="auth-subtitle">CREATE ACCOUNT</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+        {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('register') }}">
+      <div class="mb-3">
+        <label class="form-label">USERNAME</label>
+        <input type="text" name="username" class="form-control" placeholder="johndoe" required/>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">EMAIL ADDRESS</label>
+        <input type="email" name="email" class="form-control" placeholder="user@example.com" required/>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">PASSWORD</label>
+        <input type="password" name="password" class="form-control" placeholder="Min. 6 characters" required/>
+      </div>
+      <div class="mb-4">
+        <label class="form-label">CONFIRM PASSWORD</label>
+        <input type="password" name="confirm_password" class="form-control" placeholder="Repeat password" required/>
+      </div>
+      <button type="submit" class="btn btn-danger w-100 fw-bold py-2" style="border-radius:8px;font-family:var(--font-mono);letter-spacing:1px">
+        <i class="bi bi-person-plus-fill me-2"></i>CREATE ACCOUNT
+      </button>
+    </form>
+
+    <hr style="border-color:var(--border);margin:1.5rem 0"/>
+    <p class="text-center mb-0" style="font-size:.85rem;color:var(--text-muted-custom)">
+      Already registered? <a href="{{ url_for('login') }}" class="text-danger fw-bold text-decoration-none">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

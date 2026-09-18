@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Login – VulnScanner{% endblock %}
+{% block auth_content %}
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <i class="bi bi-shield-fill-exclamation text-danger me-2"></i>
+      Vuln<span class="text-danger">Scanner</span>
+    </div>
+    <p class="auth-subtitle">SECURITY ASSESSMENT PLATFORM</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+        {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <div class="mb-3">
+        <label class="form-label">EMAIL ADDRESS</label>
+        <input type="email" name="email" class="form-control" placeholder="user@example.com" required/>
+      </div>
+      <div class="mb-4">
+        <label class="form-label">PASSWORD</label>
+        <input type="password" name="password" class="form-control" placeholder="••••••••" required/>
+      </div>
+      <button type="submit" class="btn btn-danger w-100 fw-bold py-2" style="border-radius:8px;font-family:var(--font-mono);letter-spacing:1px">
+        <i class="bi bi-lock-fill me-2"></i>SIGN IN
+      </button>
+    </form>
+
+    <hr style="border-color:var(--border);margin:1.5rem 0"/>
+    <p class="text-center mb-0" style="font-size:.85rem;color:var(--text-muted-custom)">
+      No account? <a href="{{ url_for('register') }}" class="text-danger fw-bold text-decoration-none">Register here</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

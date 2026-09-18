@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} – VulnScanner{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% set icons = {'port':'router-fill','xss':'code-slash','header':'list-check','sqli':'database-exclamation'} %}
+{% set colors = {'port':'primary','xss':'danger','header':'success','sqli':'warning'} %}
+{% set descs = {
+  'port': 'Discovers open TCP ports that could expose attack surfaces or running services.',
+  'xss':  'Tests for reflected Cross-Site Scripting vulnerabilities using common payloads.',
+  'header':'Audits HTTP security headers and flags missing or misconfigured headers.',
+  'sqli': 'Probes URL parameters with SQL injection payloads and monitors for error leakage.'
+} %}
+
+{% block content %}
+<div class="page-head">
+  <h4><i class="bi bi-{{ icons[scan_type] }} text-{{ colors[scan_type] }} me-2"></i>{{ title }}</h4>
+  <p>// {{ descs[scan_type] }}</p>
+</div>
+
+<!-- SCAN FORM CARD -->
+<div class="vs-card mb-4">
+  <div class="vs-card-header">
+    <i class="bi bi-crosshair text-danger"></i> Target Configuration
+  </div>
+  <div class="vs-card-body">
+    <form id="scanForm" autocomplete="off">
+      <div class="scan-input-group d-flex mb-3">
+        <input type="url" id="urlInput" class="form-control scan-url-input"
+               placeholder="https://example.com" required/>
+        <button type="submit" id="scanBtn" class="btn-scan">
+          <i class="bi bi-play-fill me-1"></i>SCAN
+        </button>
+      </div>
+      <small style="color:var(--text-muted-custom);font-family:var(--font-mono);font-size:.75rem">
+        <i class="bi bi-info-circle me-1"></i>
+        For educational/authorized testing only. Do not scan systems you don't own.
+      </small>
+    </form>
+  </div>
+</div>
+
+<!-- TERMINAL OUTPUT -->
+<div class="vs-card mb-4">
+  <div class="vs-card-header">
+    <i class="bi bi-terminal-fill text-success"></i> Scan Output
+    <span class="ms-auto" style="font-size:.72rem;color:#3d5270">LIVE FEED</span>
+  </div>
+  <div class="vs-card-body">
+    <div class="scanning-bar" id="scanBar"></div>
+    <div class="terminal" id="terminal">> Ready. Enter a URL and press SCAN.
+</div>
+  </div>
+</div>
+
+<!-- RESULT SUMMARY -->
+<div id="resultCard" class="result-card mb-4">
+  <div class="d-flex align-items-start gap-2">
+    <div id="resultSev"></div>
+    <div>
+      <div style="font-size:.75rem;color:var(--text-muted-custom);font-family:var(--font-mono);margin-bottom:.25rem">FINDINGS SUMMARY</div>
+      <div id="resultText" style="font-size:.95rem;color:#e8f0ff;font-weight:600"></div>
+    </div>
+    <a id="downloadBtn" href="#" class="btn btn-sm btn-outline-light ms-auto" style="display:none;white-space:nowrap">
+      <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
+    </a>
+  </div>
+</div>
+
+<!-- HISTORY TABLE -->
+<div class="vs-card">
+  <div class="vs-card-header">
+    <i class="bi bi-clock-history"></i> {{ scan_type.upper() }} Scan History
+    <a href="{{ url_for('history') }}" class="ms-auto text-decoration-none" style="font-size:.8rem;color:var(--blue)">Full History →</a>
+  </div>
+  <div class="vs-card-body p-0">
+    <table class="table vs-table mb-0">
+      <thead><tr>
+        <th>Date</th><th>URL</th><th>Severity</th><th>Findings</th><th>PDF</th>
+      </tr></thead>
+      <tbody id="liveHistory">
+        {% for s in history %}
+        <tr class="history-row">
+          <td>{{ s.scanned_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td class="text-truncate" style="max-width:200px" title="{{ s.target_url }}">{{ s.target_url }}</td>
+          <td><span class="badge sev-{{ s.severity }}">{{ s.severity.upper() }}</span></td>
+          <td class="text-truncate" style="max-width:240px" title="{{ s.findings }}">{{ s.findings }}</td>
+          <td><a href="{{ url_for('download_single_pdf', scan_id=s.id) }}" class="btn btn-sm btn-danger-outline"><i class="bi bi-download"></i></a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center py-4" style="color:var(--text-muted-custom);font-family:var(--font-mono)">No {{ scan_type.upper() }} scans yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>initScanner('{{ scan_type }}');</script>
+{% endblock %}

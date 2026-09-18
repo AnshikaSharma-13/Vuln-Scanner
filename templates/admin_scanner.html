@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} History – Admin{% endblock %}
+{% block page_title %}{{ title }} – Global History{% endblock %}
+
+{% set icons = {'port':'router-fill','xss':'code-slash','header':'list-check','sqli':'database-exclamation'} %}
+{% set clrs  = {'port':'primary','xss':'danger','header':'success','sqli':'warning'} %}
+
+{% block content %}
+<div class="page-head d-flex align-items-end justify-content-between">
+  <div>
+    <h4><i class="bi bi-{{ icons[scan_type] }} text-{{ clrs[scan_type] }} me-2"></i>{{ title }} – All Users</h4>
+    <p>// Complete platform history for {{ title }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    {% for t, lbl in [('port','Port'),('xss','XSS'),('header','Header'),('sqli','SQLi')] %}
+    <a href="{{ url_for('admin_scanner_history', scan_type=t) }}"
+       class="btn btn-sm {% if t==scan_type %}btn-danger{% else %}btn-outline-secondary{% endif %}"
+       style="font-family:var(--font-mono);font-size:.75rem">{{ lbl }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- SUMMARY STATS -->
+{% if scans %}
+{% set high_c   = scans|selectattr('severity','eq','high')|list|length %}
+{% set med_c    = scans|selectattr('severity','eq','medium')|list|length %}
+{% set low_c    = scans|selectattr('severity','eq','low')|list|length %}
+<div class="grid-4 mb-4">
+  <div class="stat-card info">
+    <div class="stat-number">{{ scans|length }}</div>
+    <div class="stat-label">Total {{ scan_type.upper() }} Scans</div>
+    <i class="bi bi-database stat-icon"></i>
+  </div>
+  <div class="stat-card danger">
+    <div class="stat-number">{{ high_c }}</div>
+    <div class="stat-label">High Risk</div>
+    <i class="bi bi-exclamation-triangle-fill stat-icon"></i>
+  </div>
+  <div class="stat-card warning">
+    <div class="stat-number">{{ med_c }}</div>
+    <div class="stat-label">Medium Risk</div>
+    <i class="bi bi-dash-circle stat-icon"></i>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-number">{{ low_c }}</div>
+    <div class="stat-label">Low Risk</div>
+    <i class="bi bi-check-circle stat-icon"></i>
+  </div>
+</div>
+{% endif %}
+
+<div class="vs-card mb-3">
+  <div class="vs-card-body d-flex gap-2 flex-wrap align-items-center">
+    <span style="font-family:var(--font-mono);font-size:.8rem;color:var(--text-muted-custom)">FILTER:</span>
+    <button class="btn btn-sm btn-outline-secondary filter-btn active" data-filter="all">All</button>
+    <button class="btn btn-sm btn-outline-danger filter-btn" data-filter="high">HIGH</button>
+    <button class="btn btn-sm btn-outline-warning filter-btn" data-filter="medium">MEDIUM</button>
+    <button class="btn btn-sm btn-outline-success filter-btn" data-filter="low">LOW</button>
+    <input type="text" id="searchBox" class="form-control form-control-sm ms-auto" style="max-width:220px" placeholder="Search user or URL..."/>
+  </div>
+</div>
+
+<div class="vs-card">
+  <div class="vs-card-body p-0">
+    {% if scans %}
+    <table class="table vs-table mb-0" id="histTable">
+      <thead><tr>
+        <th>#</th><th>Date</th><th>User</th><th>URL</th><th>Severity</th><th>Findings</th><th>PDF</th>
+      </tr></thead>
+      <tbody>
+        {% for s in scans %}
+        <tr data-sev="{{ s.severity }}" data-search="{{ s.user.username|lower }} {{ s.target_url|lower }}">
+          <td>{{ s.id }}</td>
+          <td>{{ s.scanned_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="user-avatar" style="width:22px;height:22px;font-size:.65rem">{{ s.user.username[0].upper() }}</div>
+              <span class="text-info text-mono">{{ s.user.username }}</span>
+            </div>
+          </td>
+          <td class="text-truncate" style="max-width:160px" title="{{ s.target_url }}">{{ s.target_url }}</td>
+          <td><span class="badge sev-{{ s.severity }}">{{ s.severity.upper() }}</span></td>
+          <td class="text-truncate" style="max-width:200px" title="{{ s.findings }}">{{ s.findings }}</td>
+          <td><a href="{{ url_for('download_single_pdf', scan_id=s.id) }}" class="btn btn-sm btn-danger-outline"><i class="bi bi-download"></i></a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-5 text-center" style="color:var(--text-muted-custom);font-family:var(--font-mono)">
+      <i class="bi bi-radar fs-1 mb-2 d-block"></i>No {{ title }} scans recorded yet.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const rows    = document.querySelectorAll('#histTable tbody tr');
+const btns    = document.querySelectorAll('.filter-btn');
+const search  = document.getElementById('searchBox');
+let filt = 'all', q = '';
+
+function refresh() {
+  rows.forEach(r => {
+    const sev = r.dataset.sev;
+    const txt = r.dataset.search || '';
+    r.style.display = (filt === 'all' || sev === filt) && txt.includes(q) ? '' : 'none';
+  });
+}
+
+btns.forEach(b => {
+  b.addEventListener('click', () => {
+    btns.forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    filt = b.dataset.filter;
+    refresh();
+  });
+});
+
+if (search) search.addEventListener('input', () => { q = search.value.toLowerCase(); refresh(); });
+</script>
+{% endblock %}

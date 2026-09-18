@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard – VulnScanner{% endblock %}
+{% block page_title %}User Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h4>Welcome back, {{ current_user.username }}</h4>
+  <p>// Your personal vulnerability scanning overview</p>
+</div>
+
+<!-- STAT CARDS -->
+<div class="grid-4 mb-4">
+  <div class="stat-card danger">
+    <div class="stat-number">{{ high }}</div>
+    <div class="stat-label">High Risk</div>
+    <i class="bi bi-exclamation-triangle-fill stat-icon"></i>
+  </div>
+  <div class="stat-card warning">
+    <div class="stat-number">{{ medium }}</div>
+    <div class="stat-label">Medium Risk</div>
+    <i class="bi bi-dash-circle-fill stat-icon"></i>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-number">{{ low }}</div>
+    <div class="stat-label">Low Risk</div>
+    <i class="bi bi-check-circle-fill stat-icon"></i>
+  </div>
+  <div class="stat-card info">
+    <div class="stat-number">{{ high + medium + low }}</div>
+    <div class="stat-label">Total Scans</div>
+    <i class="bi bi-bar-chart-fill stat-icon"></i>
+  </div>
+</div>
+
+<!-- CHARTS -->
+<div class="grid-2 mb-4">
+  <div class="vs-card">
+    <div class="vs-card-header"><i class="bi bi-pie-chart-fill text-danger"></i> Severity Distribution</div>
+    <div class="vs-card-body"><div class="chart-wrap"><canvas id="sevChart"></canvas></div></div>
+  </div>
+  <div class="vs-card">
+    <div class="vs-card-header"><i class="bi bi-bar-chart-fill text-info"></i> Scans by Type</div>
+    <div class="vs-card-body"><div class="chart-wrap"><canvas id="typeChart"></canvas></div></div>
+  </div>
+</div>
+
+<!-- QUICK SCAN BUTTONS -->
+<div class="vs-card mb-4">
+  <div class="vs-card-header"><i class="bi bi-lightning-fill text-warning"></i> Quick Scan</div>
+  <div class="vs-card-body">
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{{ url_for('scan_port_page') }}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-router-fill me-1"></i>Port Scan
+      </a>
+      <a href="{{ url_for('scan_xss_page') }}" class="btn btn-outline-danger btn-sm">
+        <i class="bi bi-code-slash me-1"></i>XSS Scan
+      </a>
+      <a href="{{ url_for('scan_header_page') }}" class="btn btn-outline-success btn-sm">
+        <i class="bi bi-list-check me-1"></i>Header Scan
+      </a>
+      <a href="{{ url_for('scan_sqli_page') }}" class="btn btn-outline-warning btn-sm">
+        <i class="bi bi-database-exclamation me-1"></i>SQL Injection
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- RECENT SCANS -->
+<div class="vs-card">
+  <div class="vs-card-header">
+    <i class="bi bi-clock-history text-secondary"></i> Recent Scans
+    <a href="{{ url_for('history') }}" class="ms-auto text-decoration-none" style="font-size:.8rem;color:var(--blue)">View All →</a>
+  </div>
+  <div class="vs-card-body p-0">
+    {% if scans %}
+    <table class="table vs-table mb-0">
+      <thead><tr>
+        <th>Date</th><th>URL</th><th>Type</th><th>Severity</th><th>Findings</th><th>PDF</th>
+      </tr></thead>
+      <tbody>
+        {% for s in scans %}
+        <tr>
+          <td>{{ s.scanned_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td class="text-truncate" style="max-width:160px" title="{{ s.target_url }}">{{ s.target_url }}</td>
+          <td><span class="badge bg-secondary">{{ s.scan_type.upper() }}</span></td>
+          <td><span class="badge sev-{{ s.severity }}">{{ s.severity.upper() }}</span></td>
+          <td class="text-truncate" style="max-width:200px" title="{{ s.findings }}">{{ s.findings }}</td>
+          <td><a href="{{ url_for('download_single_pdf', scan_id=s.id) }}" class="btn-danger-outline btn btn-sm"><i class="bi bi-download"></i></a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-4 text-center" style="color:var(--text-muted-custom);font-family:var(--font-mono)">
+      <i class="bi bi-radar fs-2 mb-2 d-block"></i>No scans yet. Start scanning above.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>loadChart('/api/chart/user','sevChart','typeChart');</script>
+{% endblock %}

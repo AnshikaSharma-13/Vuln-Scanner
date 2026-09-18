@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Profile – VulnScanner{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h4>Account Settings</h4>
+  <p>// Manage your profile and credentials</p>
+</div>
+
+<div class="grid-2">
+  <!-- PROFILE INFO -->
+  <div class="vs-card">
+    <div class="vs-card-header"><i class="bi bi-person-circle text-info"></i> Profile Info</div>
+    <div class="vs-card-body">
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <div class="user-avatar" style="width:56px;height:56px;font-size:1.4rem">
+          {{ current_user.username[0].upper() }}
+        </div>
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;color:#e8f0ff">{{ current_user.username }}</div>
+          <div style="font-size:.8rem;color:var(--text-muted-custom);font-family:var(--font-mono)">{{ current_user.email }}</div>
+          <span class="badge bg-secondary mt-1">Standard User</span>
+        </div>
+      </div>
+
+      <div class="row g-3" style="font-family:var(--font-mono);font-size:.82rem">
+        <div class="col-12">
+          <div style="color:var(--text-muted-custom)">MEMBER SINCE</div>
+          <div style="color:#c9d8f0">{{ current_user.created_at.strftime('%B %d, %Y') }}</div>
+        </div>
+        <div class="col-12">
+          <div style="color:var(--text-muted-custom)">TOTAL SCANS</div>
+          <div style="color:#c9d8f0;font-size:1.4rem;font-weight:700">{{ total }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPDATE FORM -->
+  <div class="vs-card">
+    <div class="vs-card-header"><i class="bi bi-pencil-fill text-warning"></i> Update Details</div>
+    <div class="vs-card-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+          {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('update_profile') }}">
+        <div class="mb-3">
+          <label class="form-label">USERNAME</label>
+          <input type="text" name="username" class="form-control"
+                 value="{{ current_user.username }}" placeholder="New username"/>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">EMAIL</label>
+          <input type="email" name="email" class="form-control"
+                 value="{{ current_user.email }}" placeholder="New email"/>
+        </div>
+        <hr style="border-color:var(--border)"/>
+        <div class="mb-3">
+          <label class="form-label">NEW PASSWORD <span style="color:var(--text-muted-custom)">(leave blank to keep current)</span></label>
+          <input type="password" name="new_password" class="form-control" placeholder="New password"/>
+        </div>
+        <button type="submit" class="btn btn-warning fw-bold w-100" style="border-radius:8px;font-family:var(--font-mono)">
+          <i class="bi bi-save me-1"></i>SAVE CHANGES
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

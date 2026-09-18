@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard – VulnScanner{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h4><i class="bi bi-shield-lock-fill text-danger me-2"></i>Admin Overview</h4>
+  <p>// Platform-wide vulnerability scan analytics</p>
+</div>
+
+<!-- STAT CARDS -->
+<div class="grid-4 mb-4">
+  <div class="stat-card info">
+    <div class="stat-number">{{ users }}</div>
+    <div class="stat-label">Registered Users</div>
+    <i class="bi bi-people-fill stat-icon"></i>
+  </div>
+  <div class="stat-card danger">
+    <div class="stat-number">{{ high }}</div>
+    <div class="stat-label">High Risk Scans</div>
+    <i class="bi bi-exclamation-triangle-fill stat-icon"></i>
+  </div>
+  <div class="stat-card warning">
+    <div class="stat-number">{{ medium }}</div>
+    <div class="stat-label">Medium Risk Scans</div>
+    <i class="bi bi-dash-circle-fill stat-icon"></i>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-number">{{ low }}</div>
+    <div class="stat-label">Low Risk Scans</div>
+    <i class="bi bi-check-circle-fill stat-icon"></i>
+  </div>
+</div>
+
+<!-- CHARTS -->
+<div class="grid-2 mb-4">
+  <div class="vs-card">
+    <div class="vs-card-header"><i class="bi bi-pie-chart-fill text-danger"></i> Global Severity Distribution</div>
+    <div class="vs-card-body"><div class="chart-wrap"><canvas id="sevChart"></canvas></div></div>
+  </div>
+  <div class="vs-card">
+    <div class="vs-card-header"><i class="bi bi-bar-chart-fill text-info"></i> Scans per Scanner Type</div>
+    <div class="vs-card-body"><div class="chart-wrap"><canvas id="typeChart"></canvas></div></div>
+  </div>
+</div>
+
+<!-- SCANNER SHORTCUTS -->
+<div class="vs-card mb-4">
+  <div class="vs-card-header"><i class="bi bi-grid-fill text-secondary"></i> Scanner Analytics</div>
+  <div class="vs-card-body">
+    <div class="d-flex gap-2 flex-wrap">
+      {% for t, label, icon, color in [('port','Port Scanner','router-fill','primary'),('xss','XSS Scanner','code-slash','danger'),('header','Header Scanner','list-check','success'),('sqli','SQL Injection','database-exclamation','warning')] %}
+      <a href="{{ url_for('admin_scanner_history', scan_type=t) }}" class="btn btn-outline-{{ color }} btn-sm">
+        <i class="bi bi-{{ icon }} me-1"></i>{{ label }}
+      </a>
+      {% endfor %}
+      <a href="{{ url_for('admin_users') }}" class="btn btn-outline-info btn-sm ms-auto">
+        <i class="bi bi-people-fill me-1"></i>Manage Users
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- RECENT SCANS ALL USERS -->
+<div class="vs-card">
+  <div class="vs-card-header"><i class="bi bi-activity text-danger"></i> Latest Platform Activity</div>
+  <div class="vs-card-body p-0">
+    {% if recent %}
+    <table class="table vs-table mb-0">
+      <thead><tr>
+        <th>Date</th><th>User</th><th>URL</th><th>Type</th><th>Severity</th><th>Findings</th><th>PDF</th>
+      </tr></thead>
+      <tbody>
+        {% for s in recent %}
+        <tr>
+          <td>{{ s.scanned_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td><span class="text-info text-mono">{{ s.user.username }}</span></td>
+          <td class="text-truncate" style="max-width:140px" title="{{ s.target_url }}">{{ s.target_url }}</td>
+          <td><span class="badge bg-secondary">{{ s.scan_type.upper() }}</span></td>
+          <td><span class="badge sev-{{ s.severity }}">{{ s.severity.upper() }}</span></td>
+          <td class="text-truncate" style="max-width:180px" title="{{ s.findings }}">{{ s.findings }}</td>
+          <td><a href="{{ url_for('download_single_pdf', scan_id=s.id) }}" class="btn btn-sm btn-danger-outline"><i class="bi bi-download"></i></a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-4 text-center" style="color:var(--text-muted-custom);font-family:var(--font-mono)">No scans recorded yet.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>loadChart('/api/chart/admin','sevChart','typeChart');</script>
+{% endblock %}

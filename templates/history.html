@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}History – VulnScanner{% endblock %}
+{% block page_title %}Scan History{% endblock %}
+
+{% block content %}
+<div class="page-head d-flex align-items-end justify-content-between">
+  <div>
+    <h4>Scan History</h4>
+    <p>// Complete record of all your vulnerability scans</p>
+  </div>
+  {% if scans %}
+  <a href="{{ url_for('download_history') }}" class="btn btn-danger btn-sm fw-bold" style="font-family:var(--font-mono)">
+    <i class="bi bi-file-earmark-pdf me-1"></i>DOWNLOAD ALL PDF
+  </a>
+  {% endif %}
+</div>
+
+<!-- FILTER BAR -->
+<div class="vs-card mb-3">
+  <div class="vs-card-body d-flex gap-2 flex-wrap align-items-center">
+    <span style="font-family:var(--font-mono);font-size:.8rem;color:var(--text-muted-custom)">FILTER:</span>
+    <button class="btn btn-sm btn-outline-secondary filter-btn active" data-filter="all">All</button>
+    <button class="btn btn-sm btn-outline-danger filter-btn" data-filter="high">HIGH</button>
+    <button class="btn btn-sm btn-outline-warning filter-btn" data-filter="medium">MEDIUM</button>
+    <button class="btn btn-sm btn-outline-success filter-btn" data-filter="low">LOW</button>
+    <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="port">PORT</button>
+    <button class="btn btn-sm btn-outline-danger filter-btn" data-filter="xss">XSS</button>
+    <button class="btn btn-sm btn-outline-success filter-btn" data-filter="header">HEADER</button>
+    <button class="btn btn-sm btn-outline-warning filter-btn" data-filter="sqli">SQLi</button>
+    <input type="text" id="searchBox" class="form-control form-control-sm ms-auto" style="max-width:220px" placeholder="Search URL..."/>
+  </div>
+</div>
+
+<div class="vs-card">
+  <div class="vs-card-body p-0">
+    {% if scans %}
+    <table class="table vs-table mb-0" id="historyTable">
+      <thead><tr>
+        <th>#</th><th>Date</th><th>URL</th><th>Type</th><th>Severity</th><th>Findings</th><th>PDF</th>
+      </tr></thead>
+      <tbody>
+        {% for s in scans %}
+        <tr data-sev="{{ s.severity }}" data-type="{{ s.scan_type }}" data-url="{{ s.target_url|lower }}">
+          <td>{{ s.id }}</td>
+          <td>{{ s.scanned_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td class="text-truncate" style="max-width:160px" title="{{ s.target_url }}">{{ s.target_url }}</td>
+          <td><span class="badge bg-secondary">{{ s.scan_type.upper() }}</span></td>
+          <td><span class="badge sev-{{ s.severity }}">{{ s.severity.upper() }}</span></td>
+          <td class="text-truncate" style="max-width:220px" title="{{ s.findings }}">{{ s.findings }}</td>
+          <td>
+            <a href="{{ url_for('download_single_pdf', scan_id=s.id) }}" class="btn btn-sm btn-danger-outline">
+              <i class="bi bi-download me-1"></i>PDF
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-5 text-center" style="color:var(--text-muted-custom);font-family:var(--font-mono)">
+      <i class="bi bi-radar fs-1 mb-3 d-block"></i>
+      No scan history found.<br/>
+      <a href="{{ url_for('scan_port_page') }}" class="text-danger mt-2 d-inline-block">Start your first scan →</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const filterBtns = document.querySelectorAll('.filter-btn');
+const rows = document.querySelectorAll('#historyTable tbody tr');
+const searchBox = document.getElementById('searchBox');
+
+let activeFilter = 'all';
+let searchVal = '';
+
+function applyFilters() {
+  rows.forEach(row => {
+    const sev  = row.dataset.sev;
+    const type = row.dataset.type;
+    const url  = row.dataset.url || '';
+    const matchFilter = activeFilter === 'all'
+      || sev === activeFilter
+      || type === activeFilter;
+    const matchSearch = url.includes(searchVal);
+    row.style.display = (matchFilter && matchSearch) ? '' : 'none';
+  });
+}
+
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    filterBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    applyFilters();
+  });
+});
+
+if (searchBox) {
+  searchBox.addEventListener('input', () => {
+    searchVal = searchBox.value.toLowerCase();
+    applyFilters();
+  });
+}
+</script>
+{% endblock %}
